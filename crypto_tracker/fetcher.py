@@ -30,6 +30,24 @@ class AggregatedData:
     raw_data: dict
 
 
+def fetch_coincap() -> Optional[CryptoPrice]:
+    try:
+        btc_resp = requests.get("https://api.coincap.io/v2/assets/bitcoin", timeout=REQUEST_TIMEOUT)
+        btc_resp.raise_for_status()
+        btc_price = float(btc_resp.json()["data"]["priceUsd"])
+
+        eth_resp = requests.get("https://api.coincap.io/v2/assets/ethereum", timeout=REQUEST_TIMEOUT)
+        eth_resp.raise_for_status()
+        eth_price = float(eth_resp.json()["data"]["priceUsd"])
+
+        prices = CryptoPrice(btc_usd=btc_price, eth_usd=eth_price)
+        logger.info(f"CoinCap: BTC=${prices.btc_usd:.2f}, ETH=${prices.eth_usd:.2f}")
+        return prices
+    except Exception as e:
+        logger.error(f"CoinCap fetch failed: {e}")
+        return None
+
+
 def fetch_coingecko() -> Optional[CryptoPrice]:
     url = "https://api.coingecko.com/api/v3/simple/price"
     params = {"ids": "bitcoin,ethereum", "vs_currencies": "usd"}
@@ -76,8 +94,12 @@ def fetch_exchange_rates() -> Optional[ExchangeRates]:
 def fetch_all() -> AggregatedData:
     raw_data = {}
 
-    crypto = fetch_coingecko()
-    source = "coingecko"
+    crypto = fetch_coincap()
+    source = "coincap"
+
+    if crypto is None:
+        crypto = fetch_coingecko()
+        source = "coingecko"
 
     if crypto is None:
         crypto = CryptoPrice()
