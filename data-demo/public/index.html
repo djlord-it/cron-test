@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>CRYPTO TRACKER</title>
+        <style>
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: "Consolas", "Lucida Console", monospace;
+                font-size: 11px;
+                background: #0a0a0a;
+                height: 100vh;
+                color: #b89468;
+                padding: 6px;
+                overflow: hidden;
+            }
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+
+            header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 4px 6px;
+                border-bottom: 1px solid #3a3a3a;
+                flex-shrink: 0;
+            }
+
+            h1 {
+                font-size: 12px;
+                font-weight: normal;
+                color: #b89468;
+            }
+
+            .status {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 10px;
+            }
+
+            .status-dot {
+                width: 6px;
+                height: 6px;
+                background: #3a3a3a;
+            }
+
+            .status-dot.connected {
+                background: #b89468;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1px;
+                margin: 6px 0;
+                background: #2a2a2a;
+                border: 1px solid #2a2a2a;
+                flex-shrink: 0;
+            }
+
+            .stat-card {
+                background: #0a0a0a;
+                padding: 6px;
+            }
+
+            .stat-card h3 {
+                font-size: 9px;
+                font-weight: normal;
+                color: #666;
+                margin-bottom: 2px;
+            }
+
+            .stat-card .value {
+                font-size: 13px;
+                font-weight: normal;
+                color: #b89468;
+            }
+
+            .stat-card .value.success { color: #6b8e6b; }
+            .stat-card .value.error { color: #8e6b6b; }
+
+            h2 {
+                font-size: 9px;
+                font-weight: normal;
+                color: #666;
+                margin-bottom: 3px;
+                padding: 2px 0;
+            }
+
+            .count {
+                color: #b89468;
+            }
+
+            .table-container {
+                border: 1px solid #2a2a2a;
+                flex: 1;
+                min-height: 0;
+            }
+
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 10px;
+            }
+
+            th {
+                background: #1a1a1a;
+                text-align: left;
+                padding: 4px 6px;
+                color: #666;
+                font-weight: normal;
+                border-bottom: 1px solid #2a2a2a;
+                position: sticky;
+                top: 0;
+            }
+
+            td {
+                padding: 3px 6px;
+                border-bottom: 1px solid #1a1a1a;
+                color: #b89468;
+            }
+
+            tr:last-child td {
+                border-bottom: none;
+            }
+
+            tr.new {
+                background: #12120a;
+            }
+
+            .null {
+                color: #3a3a3a;
+            }
+
+            .id {
+                color: #555;
+            }
+
+            .empty {
+                text-align: center;
+                padding: 12px;
+                color: #555;
+            }
+
+            .scroll-table {
+                overflow-y: auto;
+                height: 100%;
+            }
+
+            .scroll-table::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .scroll-table::-webkit-scrollbar-track {
+                background: #1a1a1a;
+            }
+
+            .scroll-table::-webkit-scrollbar-thumb {
+                background: #3a3a3a;
+            }
+
+            .status-badge {
+                display: inline-block;
+                padding: 1px 4px;
+                font-size: 8px;
+                text-transform: uppercase;
+            }
+
+            .status-badge.completed { color: #6b8e6b; }
+            .status-badge.failed { color: #8e6b6b; }
+            .status-badge.processing { color: #8e8e6b; }
+            .status-badge.pending { color: #6b6b8e; }
+
+            .latency { color: #666; font-size: 9px; }
+            .latency.fast { color: #6b8e6b; }
+            .latency.slow { color: #8e8e6b; }
+
+            .section-header {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                margin-top: 8px;
+                padding: 4px 0;
+                border-top: 1px solid #2a2a2a;
+                flex-shrink: 0;
+            }
+
+            .section-header h2 {
+                margin: 0;
+            }
+
+            .section-tag {
+                font-size: 8px;
+                color: #555;
+                padding: 1px 4px;
+                border: 1px solid #333;
+            }
+
+            .health-bar {
+                display: flex;
+                gap: 12px;
+                margin-bottom: 6px;
+                flex-shrink: 0;
+            }
+
+            .health-item {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 9px;
+                color: #666;
+            }
+
+            .health-dot {
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: #3a3a3a;
+            }
+
+            .health-dot.ok { background: #6b8e6b; }
+            .health-dot.error { background: #8e6b6b; }
+            .health-dot.checking { background: #8e8e6b; animation: pulse 1s infinite; }
+
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+
+            .health-latency {
+                color: #555;
+                font-size: 8px;
+            }
+
+            .uuid {
+                font-size: 8px;
+                color: #555;
+                max-width: 70px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .footer {
+                padding: 4px 0;
+                border-top: 1px solid #2a2a2a;
+                font-size: 9px;
+                color: #555;
+                text-align: center;
+                flex-shrink: 0;
+            }
+
+            .footer a {
+                color: #b89468;
+                text-decoration: none;
+            }
+
+            .footer a:hover {
+                text-decoration: underline;
+            }
+
+            .main-content {
+                flex: 1;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .snapshots-section {
+                flex: 1;
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .snapshots-section .table-container {
+                flex: 1;
+                min-height: 0;
+            }
+
+            .two-col {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                flex-shrink: 0;
+                max-height: 180px;
+            }
+
+            .two-col > div {
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+
+            .two-col .table-container {
+                flex: 1;
+                min-height: 0;
+            }
+
+            .chart-container {
+                border: 1px solid #2a2a2a;
+                background: #0a0a0a;
+                height: calc(100% - 18px);
+                position: relative;
+                padding: 8px;
+            }
+
+            .chart-container svg {
+                display: block;
+                width: 100%;
+                height: calc(100% - 24px);
+            }
+
+            .chart-legend {
+                position: absolute;
+                top: 6px;
+                right: 8px;
+                display: flex;
+                gap: 10px;
+                font-size: 8px;
+                color: #666;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 3px;
+            }
+
+            .legend-dot {
+                width: 6px;
+                height: 6px;
+            }
+
+            .legend-dot.btc { background: #b89468; }
+            .legend-dot.eth { background: #6b8e6b; }
+
+            .chart-labels {
+                display: flex;
+                justify-content: space-between;
+                font-size: 9px;
+                padding-top: 4px;
+            }
+
+            .chart-labels span:first-child { color: #b89468; }
+            .chart-labels span:last-child { color: #6b8e6b; }
+
+            @media (max-width: 800px) {
+                .two-col {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>CRYPTO TRACKER</h1>
+                <div class="status">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusText">CONNECTING</span>
+                </div>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>BTC/USD</h3>
+                    <div class="value" id="btcPrice">--</div>
+                </div>
+                <div class="stat-card">
+                    <h3>ETH/USD</h3>
+                    <div class="value" id="ethPrice">--</div>
+                </div>
+                <div class="stat-card">
+                    <h3>EUR RATE</h3>
+                    <div class="value" id="eurRate">--</div>
+                </div>
+                <div class="stat-card">
+                    <h3>UPDATED</h3>
+                    <div class="value" id="lastUpdate" style="font-size: 11px">--</div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="snapshots-section">
+                    <h2>SNAPSHOTS <span class="count" id="snapshotCount">0</span></h2>
+                    <div class="table-container">
+                        <div class="scroll-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>TIME</th>
+                                        <th>SOURCE</th>
+                                        <th>BTC</th>
+                                        <th>ETH</th>
+                                        <th>EUR</th>
+                                        <th>GBP</th>
+                                        <th>JPY</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="snapshotTable">
+                                    <tr>
+                                        <td colspan="8" class="empty">LOADING</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2>EASYCRON ENGINE</h2>
+                    <span class="section-tag">UNDER THE HOOD</span>
+                    <div class="health-bar" style="margin: 0 0 0 auto;">
+                        <div class="health-item">
+                            <span class="health-dot checking" id="easycronHealth"></span>
+                            <span>CRON</span>
+                            <span class="health-latency" id="easycronLatency"></span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-dot checking" id="dbHealth"></span>
+                            <span>DB</span>
+                        </div>
+                        <div class="health-item">
+                            <span class="health-dot checking" id="webhookHealth"></span>
+                            <span>HOOK</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>EXECUTIONS</h3>
+                        <div class="value" id="totalExec">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>SUCCESS</h3>
+                        <div class="value success" id="successRate">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>LATENCY</h3>
+                        <div class="value" id="avgLatency">--</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>FAILED</h3>
+                        <div class="value error" id="failedCount">--</div>
+                    </div>
+                </div>
+
+                <div class="two-col">
+                    <div>
+                        <h2>EXECUTION LOG <span class="count" id="execCount">0</span></h2>
+                        <div class="table-container">
+                            <div class="scroll-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>EXEC ID</th>
+                                            <th>SCHEDULED</th>
+                                            <th>FIRED</th>
+                                            <th>LATENCY</th>
+                                            <th>STATUS</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="execTable">
+                                        <tr>
+                                            <td colspan="5" class="empty">LOADING</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h2>PRICE MOVEMENT</h2>
+                        <div class="chart-container">
+                            <svg id="priceChart" width="100%" height="100%" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="btcGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#b89468;stop-opacity:0.3" />
+                                        <stop offset="100%" style="stop-color:#b89468;stop-opacity:0" />
+                                    </linearGradient>
+                                    <linearGradient id="ethGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" style="stop-color:#6b8e6b;stop-opacity:0.3" />
+                                        <stop offset="100%" style="stop-color:#6b8e6b;stop-opacity:0" />
+                                    </linearGradient>
+                                </defs>
+                                <path id="btcArea" fill="url(#btcGradient)" />
+                                <path id="ethArea" fill="url(#ethGradient)" />
+                                <polyline id="btcLine" fill="none" stroke="#b89468" stroke-width="1.5" />
+                                <polyline id="ethLine" fill="none" stroke="#6b8e6b" stroke-width="1.5" />
+                                <g id="chartDots"></g>
+                            </svg>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-dot btc"></span>BTC</span>
+                                <span class="legend-item"><span class="legend-dot eth"></span>ETH</span>
+                            </div>
+                            <div class="chart-labels">
+                                <span id="btcChange">--</span>
+                                <span id="ethChange">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                powered by <a href="https://github.com/djlord-it/easy-cron" target="_blank">easy-cron</a>
+            </div>
+        </div>
+
+        <script>
+            const snapshotTable = document.getElementById("snapshotTable");
+            const snapshotCount = document.getElementById("snapshotCount");
+            const execTable = document.getElementById("execTable");
+            const execCount = document.getElementById("execCount");
+            const btcLine = document.getElementById("btcLine");
+            const ethLine = document.getElementById("ethLine");
+            const btcArea = document.getElementById("btcArea");
+            const ethArea = document.getElementById("ethArea");
+            const chartDots = document.getElementById("chartDots");
+            const btcChangeEl = document.getElementById("btcChange");
+            const ethChangeEl = document.getElementById("ethChange");
+            const statusDot = document.getElementById("statusDot");
+            const statusText = document.getElementById("statusText");
+            const btcPrice = document.getElementById("btcPrice");
+            const ethPrice = document.getElementById("ethPrice");
+            const eurRate = document.getElementById("eurRate");
+            const lastUpdate = document.getElementById("lastUpdate");
+            const totalExec = document.getElementById("totalExec");
+            const successRate = document.getElementById("successRate");
+            const avgLatency = document.getElementById("avgLatency");
+            const failedCount = document.getElementById("failedCount");
+            const easycronHealth = document.getElementById("easycronHealth");
+            const easycronLatency = document.getElementById("easycronLatency");
+            const dbHealth = document.getElementById("dbHealth");
+            const webhookHealth = document.getElementById("webhookHealth");
+
+            let snapshots = [];
+            let executions = [];
+
+            function formatTime(isoString) {
+                if (!isoString) return '--';
+                return new Date(isoString).toLocaleTimeString("en-US", {
+                    hour12: false,
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit"
+                });
+            }
+
+            function formatPrice(val) {
+                if (val === null || val === undefined)
+                    return '<span class="null">--</span>';
+                return parseFloat(val).toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                });
+            }
+
+            function formatRate(val) {
+                if (val === null || val === undefined)
+                    return '<span class="null">--</span>';
+                return parseFloat(val).toFixed(6);
+            }
+
+            function formatLatency(fired, received) {
+                if (!fired || !received) return '<span class="latency">--</span>';
+                const ms = new Date(received) - new Date(fired);
+                const cls = ms < 500 ? 'fast' : ms > 2000 ? 'slow' : '';
+                return `<span class="latency ${cls}">${ms}ms</span>`;
+            }
+
+            function formatUuid(uuid) {
+                if (!uuid) return '--';
+                return `<span class="uuid" title="${uuid}">${uuid.slice(0, 8)}...</span>`;
+            }
+
+            function updateLatest() {
+                if (snapshots.length === 0) return;
+                const latest = snapshots[0];
+                btcPrice.innerHTML = latest.btc_usd ? formatPrice(latest.btc_usd) : "--";
+                ethPrice.innerHTML = latest.eth_usd ? formatPrice(latest.eth_usd) : "--";
+                eurRate.textContent = latest.eur_rate ? parseFloat(latest.eur_rate).toFixed(5) : "--";
+                lastUpdate.textContent = formatTime(latest.fetched_at);
+            }
+
+            function renderSnapshots(highlightId = null) {
+                if (snapshots.length === 0) {
+                    snapshotTable.innerHTML = '<tr><td colspan="8" class="empty">NO DATA</td></tr>';
+                    snapshotCount.textContent = "0";
+                    return;
+                }
+
+                snapshotTable.innerHTML = snapshots
+                    .map(
+                        (s) => `
+                        <tr class="${highlightId === s.id ? "new" : ""}">
+                            <td class="id">${s.id}</td>
+                            <td>${formatTime(s.fetched_at)}</td>
+                            <td>${s.source || "--"}</td>
+                            <td>${formatPrice(s.btc_usd)}</td>
+                            <td>${formatPrice(s.eth_usd)}</td>
+                            <td>${formatRate(s.eur_rate)}</td>
+                            <td>${formatRate(s.gbp_rate)}</td>
+                            <td>${formatRate(s.jpy_rate)}</td>
+                        </tr>
+                        `,
+                    )
+                    .join("");
+
+                snapshotCount.textContent = snapshots.length;
+                updateLatest();
+                renderChart();
+            }
+
+            function renderExecutions() {
+                if (executions.length === 0) {
+                    execTable.innerHTML = '<tr><td colspan="5" class="empty">NO EXECUTIONS</td></tr>';
+                    execCount.textContent = "0";
+                    return;
+                }
+
+                execTable.innerHTML = executions
+                    .map(
+                        (e) => `
+                        <tr>
+                            <td>${formatUuid(e.execution_id)}</td>
+                            <td>${formatTime(e.scheduled_at)}</td>
+                            <td>${formatTime(e.fired_at)}</td>
+                            <td>${formatLatency(e.fired_at, e.received_at)}</td>
+                            <td><span class="status-badge ${e.status}">${e.status}</span></td>
+                        </tr>
+                        `,
+                    )
+                    .join("");
+
+                execCount.textContent = executions.length;
+            }
+
+            function renderChart() {
+                if (snapshots.length < 2) return;
+
+                const svg = document.getElementById("priceChart");
+                const rect = svg.getBoundingClientRect();
+                const w = rect.width - 16;
+                const h = rect.height - 8;
+                const padding = 4;
+
+                const data = [...snapshots].reverse().slice(-30);
+                const btcPrices = data.map(s => parseFloat(s.btc_usd) || 0).filter(p => p > 0);
+                const ethPrices = data.map(s => parseFloat(s.eth_usd) || 0).filter(p => p > 0);
+
+                if (btcPrices.length < 2) return;
+
+                const btcMin = Math.min(...btcPrices) * 0.999;
+                const btcMax = Math.max(...btcPrices) * 1.001;
+                const ethMin = Math.min(...ethPrices) * 0.999;
+                const ethMax = Math.max(...ethPrices) * 1.001;
+
+                function scale(val, min, max) {
+                    if (max === min) return h / 2;
+                    return h - padding - ((val - min) / (max - min)) * (h - padding * 2);
+                }
+
+                const btcPoints = btcPrices.map((p, i) => {
+                    const x = padding + (i / (btcPrices.length - 1)) * (w - padding * 2);
+                    const y = scale(p, btcMin, btcMax);
+                    return `${x},${y}`;
+                });
+
+                const ethPoints = ethPrices.map((p, i) => {
+                    const x = padding + (i / (ethPrices.length - 1)) * (w - padding * 2);
+                    const y = scale(p, ethMin, ethMax);
+                    return `${x},${y}`;
+                });
+
+                btcLine.setAttribute("points", btcPoints.join(" "));
+                ethLine.setAttribute("points", ethPoints.join(" "));
+
+                const btcAreaPath = `M${padding},${h} L${btcPoints.join(" L")} L${w - padding},${h} Z`;
+                const ethAreaPath = `M${padding},${h} L${ethPoints.join(" L")} L${w - padding},${h} Z`;
+                btcArea.setAttribute("d", btcAreaPath);
+                ethArea.setAttribute("d", ethAreaPath);
+
+                let dotsHtml = '';
+                const lastBtcX = padding + ((btcPrices.length - 1) / (btcPrices.length - 1)) * (w - padding * 2);
+                const lastBtcY = scale(btcPrices[btcPrices.length - 1], btcMin, btcMax);
+                const lastEthX = padding + ((ethPrices.length - 1) / (ethPrices.length - 1)) * (w - padding * 2);
+                const lastEthY = scale(ethPrices[ethPrices.length - 1], ethMin, ethMax);
+                dotsHtml += `<circle cx="${lastBtcX}" cy="${lastBtcY}" r="3" fill="#b89468" />`;
+                dotsHtml += `<circle cx="${lastEthX}" cy="${lastEthY}" r="3" fill="#6b8e6b" />`;
+                chartDots.innerHTML = dotsHtml;
+
+                const btcFirst = btcPrices[0];
+                const btcLast = btcPrices[btcPrices.length - 1];
+                const btcPct = ((btcLast - btcFirst) / btcFirst * 100).toFixed(2);
+                const ethFirst = ethPrices[0];
+                const ethLast = ethPrices[ethPrices.length - 1];
+                const ethPct = ((ethLast - ethFirst) / ethFirst * 100).toFixed(2);
+
+                btcChangeEl.textContent = `BTC ${btcPct >= 0 ? '+' : ''}${btcPct}%`;
+                btcChangeEl.style.color = btcPct >= 0 ? '#6b8e6b' : '#8e6b6b';
+                ethChangeEl.textContent = `ETH ${ethPct >= 0 ? '+' : ''}${ethPct}%`;
+                ethChangeEl.style.color = ethPct >= 0 ? '#6b8e6b' : '#8e6b6b';
+            }
+
+            function renderStats(stats) {
+                if (!stats) return;
+                const total = parseInt(stats.total_executions) || 0;
+                const successful = parseInt(stats.successful) || 0;
+                const failed = parseInt(stats.failed) || 0;
+                const rate = total > 0 ? ((successful / total) * 100).toFixed(1) : 0;
+                const latency = stats.avg_latency_ms ? Math.round(stats.avg_latency_ms) : '--';
+
+                totalExec.textContent = total;
+                successRate.textContent = `${rate}%`;
+                avgLatency.textContent = typeof latency === 'number' ? `${latency}ms` : latency;
+                failedCount.textContent = failed;
+            }
+
+            async function fetchSnapshots() {
+                try {
+                    const res = await fetch("/api/snapshots");
+                    snapshots = await res.json();
+                    renderSnapshots();
+                } catch (err) {
+                    snapshotTable.innerHTML = '<tr><td colspan="8" class="empty">ERROR</td></tr>';
+                }
+            }
+
+            async function fetchExecutions() {
+                try {
+                    const res = await fetch("/api/executions");
+                    executions = await res.json();
+                    renderExecutions();
+                } catch (err) {
+                    execTable.innerHTML = '<tr><td colspan="5" class="empty">ERROR</td></tr>';
+                }
+            }
+
+            async function fetchStats() {
+                try {
+                    const res = await fetch("/api/stats");
+                    const stats = await res.json();
+                    renderStats(stats);
+                } catch (err) {
+                    console.error("Stats fetch error:", err);
+                }
+            }
+
+            async function fetchHealth() {
+                try {
+                    const res = await fetch("/api/health");
+                    const health = await res.json();
+
+                    easycronHealth.className = "health-dot " + (health.easycron?.status === "ok" ? "ok" : "error");
+                    if (health.easycron?.latency) {
+                        easycronLatency.textContent = `${health.easycron.latency}ms`;
+                    } else {
+                        easycronLatency.textContent = health.easycron?.status === "ok" ? "" : "unreachable";
+                    }
+
+                    dbHealth.className = "health-dot " + (health.database?.status === "ok" ? "ok" : "error");
+
+                    webhookHealth.className = "health-dot ok";
+                } catch (err) {
+                    easycronHealth.className = "health-dot error";
+                    dbHealth.className = "health-dot error";
+                    webhookHealth.className = "health-dot error";
+                }
+            }
+
+            function setupSSE() {
+                const eventSource = new EventSource("/api/events");
+
+                eventSource.onopen = () => {
+                    statusDot.classList.add("connected");
+                    statusText.textContent = "LIVE";
+                };
+
+                eventSource.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === "connected") {
+                        statusDot.classList.add("connected");
+                        statusText.textContent = "LIVE";
+                    } else if (data.type === "new-snapshot") {
+                        snapshots.unshift(data.snapshot);
+                        if (snapshots.length > 50) snapshots.pop();
+                        renderSnapshots(data.snapshot.id);
+                        fetchExecutions();
+                        fetchStats();
+                    }
+                };
+
+                eventSource.onerror = () => {
+                    statusDot.classList.remove("connected");
+                    statusText.textContent = "RECONNECTING";
+                };
+            }
+
+            fetchSnapshots();
+            fetchExecutions();
+            fetchStats();
+            fetchHealth();
+            setupSSE();
+
+            setInterval(fetchHealth, 15000);
+            window.addEventListener('resize', renderChart);
+        </script>
+    </body>
+</html>
