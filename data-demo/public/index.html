@@ -358,6 +358,39 @@
             .chart-labels span:first-child { color: #b89468; }
             .chart-labels span:last-child { color: #6b8e6b; }
 
+            .chart-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .time-selector {
+                display: flex;
+                gap: 2px;
+            }
+
+            .time-btn {
+                background: transparent;
+                border: 1px solid #333;
+                color: #555;
+                font-family: inherit;
+                font-size: 8px;
+                padding: 2px 6px;
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+
+            .time-btn:hover {
+                border-color: #555;
+                color: #888;
+            }
+
+            .time-btn.active {
+                background: #1a1a1a;
+                border-color: #b89468;
+                color: #b89468;
+            }
+
             @media (max-width: 800px) {
                 .two-col {
                     grid-template-columns: 1fr;
@@ -486,7 +519,15 @@
                         </div>
                     </div>
                     <div>
-                        <h2>PRICE MOVEMENT</h2>
+                        <div class="chart-header">
+                            <h2>PRICE MOVEMENT</h2>
+                            <div class="time-selector">
+                                <button class="time-btn" data-range="1h">1H</button>
+                                <button class="time-btn active" data-range="24h">24H</button>
+                                <button class="time-btn" data-range="7d">7D</button>
+                                <button class="time-btn" data-range="30d">30D</button>
+                            </div>
+                        </div>
                         <div class="chart-container">
                             <svg id="priceChart" width="100%" height="100%" preserveAspectRatio="none">
                                 <defs>
@@ -552,6 +593,7 @@
 
             let snapshots = [];
             let executions = [];
+            let currentRange = '24h';
 
             function formatTime(isoString) {
                 if (!isoString) return '--';
@@ -661,7 +703,7 @@
                 const h = rect.height - 8;
                 const padding = 4;
 
-                const data = [...snapshots].reverse().slice(-30);
+                const data = [...snapshots].reverse();
                 const btcPrices = data.map(s => parseFloat(s.btc_usd) || 0).filter(p => p > 0);
                 const ethPrices = data.map(s => parseFloat(s.eth_usd) || 0).filter(p => p > 0);
 
@@ -733,9 +775,9 @@
                 failedCount.textContent = failed;
             }
 
-            async function fetchSnapshots() {
+            async function fetchSnapshots(range = currentRange) {
                 try {
-                    const res = await fetch("/api/snapshots");
+                    const res = await fetch(`/api/snapshots?range=${range}`);
                     snapshots = await res.json();
                     renderSnapshots();
                 } catch (err) {
@@ -822,6 +864,15 @@
 
             setInterval(fetchHealth, 15000);
             window.addEventListener('resize', renderChart);
+
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentRange = btn.dataset.range;
+                    fetchSnapshots(currentRange);
+                });
+            });
         </script>
     </body>
 </html>

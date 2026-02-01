@@ -47,8 +47,18 @@ setInterval(pollForNewSnapshots, POLL_INTERVAL_MS);
 
 app.get("/api/snapshots", async (req, res) => {
   try {
+    const range = req.query.range || "24h";
+    let interval;
+    switch (range) {
+      case "1h": interval = "1 hour"; break;
+      case "7d": interval = "7 days"; break;
+      case "30d": interval = "30 days"; break;
+      default: interval = "24 hours";
+    }
     const result = await pool.query(
-      "SELECT * FROM price_snapshots ORDER BY id DESC LIMIT 50",
+      `SELECT * FROM price_snapshots
+       WHERE fetched_at > NOW() - INTERVAL '${interval}'
+       ORDER BY fetched_at DESC`,
     );
     if (result.rows.length > 0) {
       lastSnapshotId = result.rows[0].id;
