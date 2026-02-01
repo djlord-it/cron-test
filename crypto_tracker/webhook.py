@@ -5,9 +5,9 @@ import logging
 
 from flask import Flask, jsonify, request
 
-from .analyzer import analyze_price_change
-from .fetcher import fetch_all
-from .store import Database
+from analyzer import analyze_price_change
+from fetcher import fetch_all
+from store import Database
 
 logger = logging.getLogger(__name__)
 

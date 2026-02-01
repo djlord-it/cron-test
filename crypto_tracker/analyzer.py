@@ -1,6 +1,6 @@
 import logging
 
-from .store import Database
+from store import Database
 
 logger = logging.getLogger(__name__)
 

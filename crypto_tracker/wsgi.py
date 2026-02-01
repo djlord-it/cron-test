@@ -1,9 +1,6 @@
 import os
-import sys
 import logging
 from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent))
 
 from dotenv import load_dotenv
 

@@ -9,11 +9,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from .config import Config
-from .easycron import EasyCronClient
-from .fetcher import fetch_all
-from .store import Database
-from .webhook import create_app
+from config import Config
+from easycron import EasyCronClient
+from fetcher import fetch_all
+from store import Database
+from webhook import create_app
 
 logging.basicConfig(
     level=logging.INFO,

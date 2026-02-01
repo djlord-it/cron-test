@@ -6,7 +6,7 @@ from typing import Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from .fetcher import AggregatedData
+from fetcher import AggregatedData
 
 logger = logging.getLogger(__name__)
 
